@@ -1,2 +1,2 @@
 # ZigbeeGetway
-ESP8266 Getway 
+JN5168 Getway
