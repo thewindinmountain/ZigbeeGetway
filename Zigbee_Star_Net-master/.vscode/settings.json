@@ -1,0 +1,23 @@
+{
+  "files.associations": {
+    "node.h": "c",
+    "wuart.c": "cpp",
+    "appradio.c": "cpp",
+    "dbg.c": "cpp",
+    "node.c": "cpp",
+    "uart.c": "cpp",
+    "config.h": "c",
+    "wuart.h": "c",
+    "appusruart.h": "c",
+    "dbg.h": "c",
+    "appusruart.c": "cpp",
+    "queue.c": "cpp",
+    "queue.h": "c",
+    "drv_lcd.h": "c",
+    "epd_drv.h": "c",
+    "image.h": "c",
+    "epd_block.h": "c",
+    "epd_draw_drv.h": "c",
+    "hw_config.h": "c"
+  }
+}
