@@ -1,61 +1,75 @@
-Version V0.0.1
-date: 2018-1-22
+# 实现功能
 
-* data: 2018-10-10  
-api_disp  
-由于字库与标签本身分离，基本上都是以图片的形式进行更新
-app_table
-* 创建界面步骤：1. 背景色，写白；2. block内容更新；3. 屏幕刷新
+- AT指令的基本解析
+- 主设备可以查询无线传感网中每一个终端的MAC地址（目前是所有的传感器）
+- 根据MAC地址，可以从主设备发送数据到传感网中的每一个的终端
+
+# 终端列表查询
+
+## 查询协议
+
+![image](F12AAD8837104C28B01F03C3C9B8A8F6)
+
+## 响应协议
+
+![image](D7845711E865450C93025BF4FF450C7C)
+
+## 示例数据
+
+终端输入
+
+    7E 00 05 09 01 43 4C 66
+                   C  L
+本系统规定 CL 为查询所有的终端(Children list)
+
+输出(这是有两个终端的情况)
+
+    7E 00 55 88 01 43 4C 00 00 00 00 00 00 02 00 54 0E 3B 00 15 8D 00 0E 3B 00 54 0E 23 00 15 8D 00 0E 23 F0 
+
+## 数据结构
+
+    typedef struct
+    {
+        uint32 u32ExtAddrL;
+        uint32 u32ExtAddrH;
+        uint16 u16ShortAddr;
+    } tsNodeAddr;
+    
+    typedef struct
+    {
+        /* Data related to associated end devices */
+        uint32  		u32ScanChannels;
+        uint16          u16Children;
+        tsNodeAddr         asChild[MAX_CHILDREN];
+    } tsNodeAddrTable;
+    
+由于上述结构满足字节对齐，因此，本应用把上面这个终端列表信息全部返回给了上位机，同时对app_childTable.c 中的API进行了扩展
+    
+# 数据下发
+
+## 协议
+
+![image](CB325D3FC2304758A3E11C6E8CBF5589)
+
+## 示例数据
+
+    7E 00 0A 10 00 00 54 0E 3B 00 15 8D 00 0E 3B 51 23 45 55 99
+    
+这里是向网络地址为0E 3B 这个终端节点发送数据，这里将会返回一个应答帧
+    
+    目前在数据上只是给了一个确认性数据帧，但是确认已经没问题了
+    
+## 下发通信过程
+    
+1. AT Frame     ->      Coor    ->    EndPoint        
+2. EndPoint 产生应答帧
+3. EndPoint ack ->      Coor    ->    Master
+
+上述过程已经写出，为了避免对以前的代码进行大改，对msg.c中的下述函数进行了扩展
+
+    PUBLIC void rfMsgHandle(uint8 u8DeviceType, uint64 u64RxAddr, uint16 u16RxSize, uint8 *pu8RxPayload)
 
 
-epd_api
-* 提供画线，图片覆盖功能
-* init_lcd_io
-* app_lcd_port_init //调用init_lcd_io
-* epd_init //调用app_lcd_port_init
-* epd_test
+# 串口编号
 
-epd_block
-* 定义显示的最小单元，将屏幕划分为多个分区，暂时定义最大20个
-* 分区的属性为：起始坐标(左上角像素坐标)，长，宽，是否反色，对齐方式，边框粗细，边框位置，内容
-
-
-epd_draw_drv
-* epd_draw_range //更新局部内容，并调用EPD_Dis_Full
-* epd_draw_line //计算起始地址，然后调用epd_draw_range
-* epd_draw_image // 调用epd_draw_range
-* epd_draw_circle // 计算正方形区域，读区域内容，修改圆形部分，调用epd_draw_range
-* epd_draw_char //获取字符表，再调用epd_draw_image 
-
-epd_drv  
-* ReadBusy //等待控制器空闲
-* EPD_Write // 数据写，参数第一个数为写命令
-* EPD_WriteCMD // 命令写，无参数
-* EPD_WriteCMD_p1 // 命令写，1个参数/数据
-* EPD_WriteCMD_p2 // 命令写，2个参数/数据
-* EPD_WriteDispRam //写显示器RAM区
-* EPD_WriteDispRamMono //用1个值刷新显示器RAM区
-* EPD_POWERON
-* EPD_POWEROFF
-* part_display //设置刷新区域，调用SetRamArea和SetRamPointer
-* EPD_SetRamArea //设置写入RAM区域范围
-* EPD_SetRamPointer //设置写入RAM起始坐标
-* EPD_DispInit
-* EPD_Init
-* EPD_Update //将RAM内的数据更新到显示器
-* EPD_Update_Part //将RAM内所设置区域的数据更新到显示器
-* EPD_WirteLUT
-* EPD_init_Full //初始化为全局更新方式
-* EPD_init_Part //初始化为局部更新方式
-* EPD_Dis_Full   
-  //写整个屏幕，调用SetRamPointer + WriteDispRam/Mono + Update
-* EPD_Dis_Part  
-  //写局部屏幕，调用part_display + WriteDispRam/Mono + Update
-
-epd_spi_drv  
-* SPI_Write  
-
-hw_gpio_drv
-* setGpio
-* getGpio
-* u32GetGpio
+    数据通过调试串口，和用户串口，都可以下发AT指令和JN5168进行交互
